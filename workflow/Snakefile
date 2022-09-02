@@ -1,0 +1,14 @@
+# Main entrypoint of the workflow. 
+# Please follow the best practices: 
+# https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
+# in particular regarding the standardized folder structure mentioned there. 
+
+
+from pathlib import Path
+
+# absolute path to snakemake dir
+snakemake_dir = Path(workflow.snakefile).parent.resolve()
+# include default config values
+configfile: f"{snakemake_dir.parent}/config/default_config.yaml"
+
+
