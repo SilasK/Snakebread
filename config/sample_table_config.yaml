@@ -1,0 +1,12 @@
+# We use the Portable Encapsulated Projects (PEP) standard
+# See more on https://pep.databio.org/
+
+pep_version: 2.0.0
+# path to the sample table relative to the config file
+sample_table: "sample_table.csv"
+
+fastq_dir: .
+path_modifiers:
+  append:
+    Reads_raw_R1: { fastq_dir }
+    Reads_raw_R2: { fastq_dir }
