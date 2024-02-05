@@ -10,8 +10,7 @@ configfile: "config.yaml"
 
 rule download_metaphlan:
     output:
-        multiext(
-            METPHLAN_DB_FOLDER / "{metaphlan_version}",
+        multiext(str(METPHLAN_DB_FOLDER/"{metaphlan_version}"),
             ".tar",
             ".md5",
             "_marker_info.txt.bz2",
@@ -24,38 +23,43 @@ rule download_metaphlan:
         base_url = "http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/"
 
         # Define the files to download
-        files_to_download = [Path(path).name for path in input] + ["mpa_latest"]
+        files_to_download = [Path(path).name for path in output] + ["mpa_latest"]
+        print("Download files: ",", ".join(files_to_download))
+        output_folder= Path(output[0]).parent
 
         # Download each file
         for file in files_to_download:
+            print(f"Downloading file: {file}")
             response = requests.get(base_url + file)
 
             # Save the file
-            with open(os.path.join(METPHLAN_DB_FOLDER, file), "wb") as f:
+            with open(output_folder/ file, "wb") as f:
                 f.write(response.content)
+                print(f"File {file} downloaded and saved to {output_folder/ file}")
 
 
 rule metaphlan:
     input:
-        reads=get_concatenated_reads,
-        db=METPHLAN_DB_FOLDER / "{config[metaphlan_version]}.tar",
+        reads=get_qc_reads,
+        db=METPHLAN_DB_FOLDER / f"{config['metaphlan_version']}.tar",
     output:
         bt="Intermediate/metaphlan/output/{sample}_bowtie2.bz2",
         profile="Intermediate/metaphlan/output/{sample}_profile.txt",
     log:
         "logs/metaphlan/{sample}.log",
     params:
+        input= lambda wildcards, input: ','.join(input.reads),
         db_folder=METPHLAN_DB_FOLDER,
         version=config["metaphlan_version"],
         Type="rel_ab_w_read_stats",
-    threads: config["threads"]
+    threads: 8,
     conda:
         "../envs/metaphlan.yaml"
     shell:
         "metaphlan "
         " -t {params.Type} "
         " --unclassified_estimation "
-        " {input.reads} "
+        " {params.input} "
         " --index {params.version} "
         " --sample_id {wildcards.sample} "
         " --input_type fastq "
@@ -72,14 +76,14 @@ rule sgb_to_GTDB:
     output:
         gtdb="Intermediate/metaphlan/GTDB/{sample}_profile.txt",
     conda:
-        "utils/envs/metaphlan4.yaml"
+        "../envs/metaphlan.yaml"
     shell:
         "sgb_to_gtdb_profile.py  -i {input.sg} -o {output.gtdb}"
 
 
 rule mergeprofiles:
     input:
-        expand("Intermediate/metaphlan/{sample}_profile.txt", sample=SAMPLES),
+        expand("Intermediate/metaphlan/output/{sample}_profile.txt", sample=SAMPLES),
     output:
         o1="Intermediate/metaphlan/merged_abundance_table.txt",
         o2="Intermediate/metaphaln/merged_abundance_table_species.txt",

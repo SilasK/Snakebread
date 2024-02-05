@@ -15,16 +15,9 @@ else:
     FRACTIONS = ["se"]
 
 
-def get_raw_fastq(wildcards):
-    headers = ["Reads_raw_" + f for f in FRACTIONS]
-    fastq_dir = Path(config["fastq_dir"])
 
-    return [fastq_dir / f for f in pep.sample_table.loc[wildcards.sample, headers]]
 
 
 def get_qc_reads(wildcards):
-    return expand(
-            "QC/reads/{sample}_{fraction}.fastq.gz",
-            fraction=FRACTIONS,
-            sample=wildcards.sample
-        ),
+    headers = ["Reads_qc_" + f for f in FRACTIONS]
+    return pep.sample_table.loc[wildcards.sample, headers]
