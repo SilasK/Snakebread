@@ -1,5 +1,3 @@
-
-
 from pathlib import Path
 
 # absolute path to snakemake dir
@@ -10,7 +8,8 @@ snakemake_dir = Path(workflow.snakefile).parent.resolve()
 configfile: f"{snakemake_dir.parent}/config/default_config.yaml"
 
 
-METPHLAN_DB_FOLDER= Path(config["database_dir"])/"metaphlan_databases"
+METPHLAN_DB_FOLDER = Path(config["database_dir"]) / "metaphlan_databases"
+
 
 include: "rules/input_functions.smk"
 include: "rules/metaphlan.smk"
@@ -24,5 +23,3 @@ rule all:
         # expand("Output/humann3_{type}_cpm.tsv", 
         # type=["genefamilies", "pathabundance", "pathcoverage"]
         # ),
-
-
