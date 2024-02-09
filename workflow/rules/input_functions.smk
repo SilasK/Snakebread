@@ -19,5 +19,5 @@ else:
 
 
 def get_qc_reads(wildcards):
-    headers = ["Reads_qc_" + f for f in FRACTIONS]
+    headers = ["Reads_QC_" + f for f in FRACTIONS]
     return pep.sample_table.loc[wildcards.sample, headers]

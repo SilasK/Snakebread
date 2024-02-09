@@ -8,40 +8,30 @@
 configfile: "config.yaml"
 
 
-rule download_metaphlan:
+rule install_metaphlan:
     output:
-        multiext(str(METPHLAN_DB_FOLDER/"{metaphlan_version}"),
-            ".tar",
-            ".md5",
-            "_marker_info.txt.bz2",
-        ),
-    run:
-        import requests
+        db_folder= directory(METPHLAN_DB_FOLDER)
+    log:
+        "logs/download/metaphlan.log",
+    params:
+        version=config["metaphlan_version"],
+    threads: 1,
+    conda:
+        "../envs/metaphlan.yaml"
+    shell:
+        "metaphlan "
+        " --install "
+        " --bowtie2db {output.db_folder} "
+        " --index {params.version} "
+        " --nproc {threads} "
+        " &> {log}"
 
-
-        # Define the base URL
-        base_url = "http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/"
-
-        # Define the files to download
-        files_to_download = [Path(path).name for path in output] + ["mpa_latest"]
-        print("Download files: ",", ".join(files_to_download))
-        output_folder= Path(output[0]).parent
-
-        # Download each file
-        for file in files_to_download:
-            print(f"Downloading file: {file}")
-            response = requests.get(base_url + file)
-
-            # Save the file
-            with open(output_folder/ file, "wb") as f:
-                f.write(response.content)
-                print(f"File {file} downloaded and saved to {output_folder/ file}")
-
+#marker_pres_table
 
 rule metaphlan:
     input:
         reads=get_qc_reads,
-        db=METPHLAN_DB_FOLDER / f"{config['metaphlan_version']}.tar",
+        db_folder=METPHLAN_DB_FOLDER
     output:
         bt="Intermediate/metaphlan/output/{sample}_bowtie2.bz2",
         profile="Intermediate/metaphlan/output/{sample}_profile.txt",
@@ -49,7 +39,6 @@ rule metaphlan:
         "logs/metaphlan/{sample}.log",
     params:
         input= lambda wildcards, input: ','.join(input.reads),
-        db_folder=METPHLAN_DB_FOLDER,
         version=config["metaphlan_version"],
         Type="rel_ab_w_read_stats",
     threads: 8,
@@ -61,13 +50,24 @@ rule metaphlan:
         " --unclassified_estimation "
         " {params.input} "
         " --index {params.version} "
+        " --offline "
         " --sample_id {wildcards.sample} "
         " --input_type fastq "
-        " --bowtie2db {params.db_folder} "
+        " --bowtie2db {input.db_folder} "
         " --bowtie2out {output.bt} "
         " --nproc {threads} "
         " -o {output.profile} &> {log}"
 
+
+#   -t ANALYSIS TYPE      Type of analysis to perform:
+#                          * rel_ab: profiling a metagenomes in terms of relative abundances
+#                          * rel_ab_w_read_stats: profiling a metagenomes in terms of relative abundances and estimate the number of reads coming from each clade.
+#                          * reads_map: mapping from reads to clades (only reads hitting a marker)
+#                          * clade_profiles: normalized marker counts for clades with at least a non-null marker
+#                          * marker_ab_table: normalized marker counts (only when > 0.0 and normalized by metagenome size if --nreads is specified)
+#                          * marker_counts: non-normalized marker counts [use with extreme caution]
+#                          * marker_pres_table: list of markers present in the sample (threshold at 1.0 if not differently specified with --pres_th
+#                          * clade_specific_strain_tracker: list of markers present for a specific clade, specified with --clade, and all its subclades
 
 # sgb_to_gtdb_profile.py is a python script that is available with metaphlan4
 rule sgb_to_GTDB:
