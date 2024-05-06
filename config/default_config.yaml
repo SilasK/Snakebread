@@ -1,4 +1,5 @@
 # Use this file to define all default values
 
-metaphlan_version: "mpa_vJan21_CHOCOPhlAnSGB_202103"
+metaphlan_version: "mpa_vJun23_CHOCOPhlAnSGB_202307"
 # database_dir:
+humann_params: ""

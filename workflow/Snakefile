@@ -13,13 +13,15 @@ METPHLAN_DB_FOLDER = Path(config["database_dir"]) / "metaphlan_databases"
 
 include: "rules/input_functions.smk"
 include: "rules/metaphlan.smk"
+include: "rules/humann.smk"
 
 
 rule all:
     """Main entrypoint of the workflow. 
     """
     input:
-        "Intermediate/metaphlan/merged_abundance_table.txt",
+        "Profile/metaphlan_relab.tsv",
+         "Intermediate/Humann/db/test/test_humann_temp"
         # expand("Output/humann3_{type}_cpm.tsv", 
         # type=["genefamilies", "pathabundance", "pathcoverage"]
         # ),

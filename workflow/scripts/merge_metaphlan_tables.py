@@ -1,86 +1,116 @@
-#!/usr/bin/env python3
+import os, sys
+import logging, traceback
 
-import argparse
-import os
-import sys
-import re
+logging.basicConfig(
+    #filename=snakemake.log[0],
+    level=logging.INFO,
+    format="%(asctime)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    logging.error(
+        "".join(
+            [
+                "Uncaught exception: ",
+                *traceback.format_exception(exc_type, exc_value, exc_traceback),
+            ]
+        )
+    )
+
+
+# Install exception handler
+sys.excepthook = handle_exception
+
+## Start of the script
+
 import pandas as pd
-from itertools import takewhile
+from collections import defaultdict
 
-def merge( aaastrIn, ostm ):
+from utils.taxonomy import tax2table
+
+def extract_data(file_path):
     """
-    Outputs the table join of the given pre-split string collection.
-    :param  aaastrIn:   One or more split lines from which data are read.
-    :type   aaastrIn:   collection of collections of string collections
-    :param  iCol:       Data column in which IDs are matched (zero-indexed).
-    :type   iCol:       int
-    :param  ostm:       Output stream to which matched rows are written.
-    :type   ostm:       output stream
+    Extracts data from a single file.
+
+    Args:
+        file_path: Path to the file.
+
+    Returns:
+        A tuple containing:
+            - A dictionary with header information (estimated reads and processed reads)
+            - A list of rows containing data from lines containing "t__"
     """
 
-    listmpaVersion = set()
-    merged_tables = pd.DataFrame()
+    stats = {}
+    rows = []
+    header = None
+    with open(file_path, 'r') as f:
+        for line in f:
+            if line.startswith('#'):
+                line= line[1:].strip()
+                if  line.startswith('mpa'):
+                    stats['db_version'] = line
+                elif line.startswith("estimated_reads_mapped_to_known_clades"):
+                    stats['mapped_reads'] = int( line.split(':')[1] )
+                elif 'reads processed' in line:
+                    stats['processed_reads'] = int( line.split()[0] )
+                elif line.startswith('SampleID'):
+                    stats['SampleID'] = line.split()[1]
+                elif line.startswith("clade_name"):
+                    header= line.split()
+            
+            elif 't__' in line: # main file
+                rows.append(line.strip().split())
 
-    for f in aaastrIn:
-        with open(f) as fin:
-            headers = [x.strip() for x in takewhile(lambda x: x.startswith('#'), fin)]
-        if len(headers) == 1:
-            names = ['clade_name', 'estimated_number_of_reads_from_the_clade']
-            index_col = 0
-        if len(headers) >= 4:
-            names = headers[-1].split('#')[1].strip().split('\t')
-#            print(names)
-            index_col = [0,1]
-        mpaVersion = list(filter(re.compile('#mpa_v[0-9]{2,}_CHOCOPhlAn_[0-9]{0,}').match, headers))
-        if len(mpaVersion):
-            listmpaVersion.add(mpaVersion[0])
+    data= pd.DataFrame(data=rows, columns=header).set_index("clade_name")
+    return stats, data
 
-        if len(listmpaVersion) > 1:
-            print('merge_metaphlan_tables found tables made with different versions of the MetaPhlAn2 database.\nPlease re-run MetaPhlAn2 with the same database.\n')
-            return
-        
-        iIn = pd.read_csv(f, 
-                          sep='\t',
-                          skiprows=len(headers),
-                          names = names,
-#######  Hard coded cols to read so we can extract raw abundances.
-                          usecols=[0,1,4],
-                        ).fillna('')
-        iIn = iIn.set_index(iIn.columns[index_col].to_list())
-#        print(iIn)
-        if merged_tables.empty:
-            merged_tables = iIn.iloc[:,0].rename(os.path.splitext(os.path.basename(f))[0]).to_frame()
-        else:
-            merged_tables = pd.merge(iIn.iloc[:,0].rename(os.path.splitext(os.path.basename(f))[0]).to_frame(),
-                                    merged_tables,
-                                    how='outer', 
-                                    left_index=True, 
-                                    right_index=True
-                                    )
-#            print(merged_tables)
-    if listmpaVersion:
-        ostm.write(list(listmpaVersion)[0]+'\n')
-    merged_tables.fillna('0').reset_index().to_csv(ostm, index=False, sep = '\t')
+from pathlib import Path
+input_files= input_files = snakemake.input
+combined_data= {}
+combined_stats= []
 
-argp = argparse.ArgumentParser( prog = "merge_metaphlan_tables.py",
-    description = """Performs a table join on one or more metaphlan output files.""")
-argp.add_argument( "aistms",    metavar = "input.txt", nargs = "+",
-    help = "One or more tab-delimited text tables to join" )
-argp.add_argument( '-o',    metavar = "output.txt", nargs = 1,
-    help = "Name of output file in which joined tables are saved" )
-
-__doc__ = "::\n\n\t" + argp.format_help( ).replace( "\n", "\n\t" )
-
-argp.usage = argp.format_usage()[7:]+"\n\n\tPlease make sure to supply file paths to the files to combine. If combining 3 files (Table1.txt, Table2.txt, and Table3.txt) the call should be:\n\n\t\tpython merge_metaphlan_tables.py Table1.txt Table2.txt Table3.txt > output.txt\n\n\tA wildcard to indicate all .txt files that start with Table can be used as follows:\n\n\t\tpython merge_metaphlan_tables.py Table*.txt > output.txt"
+for file_path in input_files:
+    stats, data = extract_data(file_path)
+    combined_data[stats["SampleID"]] = data.relative_abundance
+    combined_stats.append(pd.Series(stats))
 
 
-def main( ):
-    args = argp.parse_args( )
-    if args.o is None:
-        merge(args.aistms, sys.stdout)
-    else:
-        with open(args.o[0], 'w') as fout:
-            merge(args.aistms, fout)
+stats= pd.concat(combined_stats,axis=1).T.set_index("SampleID")
 
-if __name__ == '__main__':
-    main()
+
+assert stats.db_version.nunique()==1, "You have different metaphaln versions"
+
+stats.drop("db_version",inplace=True,axis=1)
+
+stats.to_csv(snakemake.output.profiling_stats)
+
+
+# transposed cladenames is index
+abundance= pd.concat(combined_data,axis=1).fillna(0)
+
+taxa= tax2table(pd.Series(abundance.index), split_character='|', remove_prefix=True).set_index("SGB")
+abundance.index= taxa.index
+
+abundance.T.to_csv(snakemake.output.abundance)
+taxa.to_csv(snakemake.output.taxonomy)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

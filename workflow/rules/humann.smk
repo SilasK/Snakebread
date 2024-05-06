@@ -1,4 +1,6 @@
 
+
+localrules: download_chocophlan,download_uniref
 rule download_chocophlan:
     output:
         directory( Path(config["database_dir"]) / "chocophlan" ),
@@ -28,32 +30,88 @@ rule download_uniref:
 
 
 
-include: "rules/qc.smk"
+rule join_metaphaln_profiles_for_human:
+    input:
+        expand("Intermediate/metaphlan/rel_ab/{sample}.txt", sample=SAMPLES),
+    params:
+        dir= lambda wc,input: Path(input[0]).parent
+    output:
+        joined_profile= "Intermediate/metaphlan/joined_rel_ab_for_humann.txt",
+        max_profile = "Intermediate/humann/max_abundance_profile.txt",
+    log:    
+        "logs/humann/join_metaphlan_profiles.log"
+    conda:
+        "../envs/biobakery.yaml"
+    shell:
+        "humann_join_tables --input {params.dir} --output {output.joined_profile} &> {log} ;\n"
+        " humann_reduce_table --input {output.joined_profile} "
+        " --output {output.max_profile} --function max --sort-by level &>> {log}"
 
+
+# humann --input $SAMPLE_1.fastq --output $OUTPUT_DIR --taxonomic-profile max_taxonomic_profile.tsv
+# The folder $OUTPUT_DIR/$SAMPLE_1_humann_temp/ 
+
+
+localrules:create_temp_fastq
+rule create_temp_fastq:
+    output:
+        temp("Intermediate/Humann/test.fastq")
+    run:
+        import random
+        with open(output[0],"w") as f:
+            f.write(f"@M00001:1:0:0:1\n{''.join(random.choices('ATCG', k=100))}\n+\n{'!' * 100}")
+
+
+
+rule create_custom_chocophlan_db:
+    input:
+        fastq= rules.create_temp_fastq.output[0],
+        nucleotide_db=ancient(Path(config["database_dir"]) / "chocophlan"),
+        protein_db= ancient(Path(config["database_dir"]) / "uniref"),
+        max_profile = rules.join_metaphaln_profiles_for_human.output.max_profile
+    output:
+        custom_db= "Intermediate/Humann/db/test/test_humann_temp"
+    conda:
+        "../envs/biobakery.yaml"
+    log:
+        "logs/humann/create_custom_db.log"
+    params:
+        output_dir=lambda wildcards, output: Path(output[0]).parent,
+        humann_params=config["humann_params"],
+    shadow:
+        "minimal"
+    threads: 6
+    resources:
+        mem_mb=64000,
+    shell:
+        "humann "
+        " --output-basename test "
+        " -i {input.fastq} "
+        " -o {params.output_dir} "
+        " --threads {threads} "
+        " --taxonomic-profile {input.max_profile} "
+        " {params.humann_params} "
+        " --nucleotide-database {input.nucleotide_db} "
+        " --protein-database {input.protein_db} "
+        " &> {log} "
 
 
 
 
 rule humann:
     input:
-        reads= get_concatenated_reads,
-        nucleotide_db=Path(config["database_dir"]) / "chocophlan",
-        protein_db=Path(config["database_dir"]) / "uniref",
+        reads= get_qc_reads,
+        nucleotide_db= rules.create_custom_chocophlan_db.output.custom_db,
+        protein_db= ancient(Path(config["database_dir"]) / "uniref"),
     output:
-        # output_dir = directory("Humann/{sample}"),
-        # "Humann/{sample}/humann2_genefamilies.tsv",
-        # "Humann/{sample}/humann2_pathabundance.tsv",
-        sam="Humann/{sample}/{sample}.sam.bz2",
-        bowtie2out="Humann/{sample}/{sample}.bowtie2.out",
-        biom= temp("Humann/{sample}/{sample}.biom"),
+        multiext("Intermediate/Humann/output/{sample}_","genefamilies.tsv","pathcoverage.tsv","pathabundance.tsv")
     conda:
         "../envs/biobakery.yaml"
     log:
-        "logs/humann/{sample}.log",
+        "logs/humann/{sample}.log", "Intermediate/Humann/output/{sample}.log"
     params:
-        output_dir="Humann/{sample}" #lambda wc, output: Path(output[0]).parent,
+        output_dir=lambda wc, output: Path(output[0]).parent,
         humann_params=config["humann_params"],
-        tax_lev="s",
     threads: 16
     resources:
         mem_mb=64000,
@@ -63,10 +121,12 @@ rule humann:
         "humann "
         "-i {resources.temp_dir}/humann_{wildcards.sample}.fastq.gz "
         " -o {params.output_dir} "
+        " --output-basename {wildcards.sample} "
         " --threads {threads} "
         " {params.humann_params} "
-        " --nucleotide-database {input.nucleotide_db} "
+        " --bypass-nucleotide-index --nucleotide-database {input.nucleotide_db} "
         " --protein-database {input.protein_db} "
+        " &> {log} "
 
 
 
@@ -74,13 +134,13 @@ rule humann:
 
 rule humann_renorm_table:
     input:
-        rules.merge_tsv.output,
+        "Intermediate/Humann/output/{sample}_{type}.tsv"
     output:
-        "Output/humann3_{type}_cpm.tsv"
+        "Intermediate/Humann/output/{sample}_{type}_cpm.tsv"
     conda:
         "../envs/biobakery.yaml"
     log:
-        "logs/post_process/renorm/{type}.log",
+        "logs/post_process/renorm/{type}/{sample}.log",
     params:
         unit ="cpm"
     threads: 1
@@ -94,13 +154,13 @@ rule humann_renorm_table:
 
 rule merge_tsv:
     input:
-        expand("Humann/{sample}/humann3_{type}.tsv", sample=SAMPLES)
+        expand("Intermediate/Humann/output/{sample}_{{type_and_norm}}.tsv", sample=SAMPLES)
     output:
-        "Output/humann3_{type}.tsv"
+        "Output/humann_{type_and_norm}.tsv"
     conda:
         "../envs/biobakery.yaml"
     log:
-        "logs/post_process/merge_tsv/{type}.log",
+        "logs/post_process/merge_tsv/{type_and_norm}.log",
     params:
         Search_dir="Humann"
     threads:
@@ -108,5 +168,5 @@ rule merge_tsv:
     resources:
         mem_mb=1000,
     shell:
-        " humann_join_tables -i {params.Search_dir} --search-subdirectories -o {output} --file_name {wildcards.type} "
+        " humann_join_tables -i {params.Search_dir} -o {output} --file_name {wildcards.type_and_norm} "
 
