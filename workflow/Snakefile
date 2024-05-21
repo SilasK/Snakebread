@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 # absolute path to snakemake dir
@@ -8,9 +7,8 @@ snakemake_dir = Path(workflow.snakefile).parent.resolve()
 # include default config values
 configfile: f"{snakemake_dir.parent}/config/default_config.yaml"
 
+
 DB_DIR = Path(config["database_dir"])
-
-
 
 
 configfile: "config.yaml"
@@ -19,19 +17,18 @@ configfile: "config.yaml"
 include: "rules/sample_table.smk"
 include: "rules/trimming.smk"
 include: "rules/decontamination.smk"
-
 include: "rules/metaphlan.smk"
 
 
 rule profile:
     input:
         "Profile/metaphlan_relab.tsv",
-        
+
 
 rule qc:
     input:
         "Reports/quality_trimming/multiqc.html",
-        expand("QC/reads/{sample}_{fraction}.fastq.gz", fraction=FRACTIONS, sample=SAMPLES),
-        "Reports/decontamination_stats.csv"
-
-
+        expand(
+            "QC/reads/{sample}_{fraction}.fastq.gz", fraction=FRACTIONS, sample=SAMPLES
+        ),
+        "Reports/decontamination_stats.csv",

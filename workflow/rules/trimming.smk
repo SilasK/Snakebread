@@ -4,7 +4,7 @@
 
 rule quality_trimming:
     input:
-        sample= get_raw_reads
+        sample=get_raw_reads,
     output:
         trimmed=temp(
             expand(

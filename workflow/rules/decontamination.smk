@@ -58,7 +58,7 @@ rule kraken_pe:
     input:
         reads=expand(
             "Intermediate/qc/reads/trimmed/{{sample}}_{fraction}.fastq.gz",
-            fraction=["R1","R2"],
+            fraction=["R1", "R2"],
         ),
         db=ancient(Kraken_db_folder),
     output:
@@ -87,14 +87,15 @@ rule kraken_pe:
         " pigz -p{threads} -c {resources.tmpdir}/{wildcards.sample}_2.fastq > {output.reads[1]}  2>> {log} ; \n "
 
 
+localrules:
+    kraken_stats,
 
 
-localrules: kraken_stats
 rule kraken_stats:
     input:
-        expand("logs/qc/decontamination/{sample}.log",sample=SAMPLES)
+        expand("logs/qc/decontamination/{sample}.log", sample=SAMPLES),
     output:
-        "Reports/decontamination_stats.csv"
+        "Reports/decontamination_stats.csv",
     log:
         "logs/qc/summarize_decontamination.log",
     script:

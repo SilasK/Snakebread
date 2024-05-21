@@ -5,18 +5,19 @@
 
 METPHLAN_DB_FOLDER = DB_DIR / "metaphlan_databases"
 
+
 rule install_metaphlan:
     output:
-        touch(METPHLAN_DB_FOLDER/"{version}_installed"),
+        touch(METPHLAN_DB_FOLDER / "{version}_installed"),
     log:
         "logs/metaphlan/install_{version}.log",
     params:
         db_folder=METPHLAN_DB_FOLDER,
     shadow:
         "minimal"
-    threads: 1,
+    threads: 1
     resources:
-        mem_mb= config["mem_simple"] * 1024,
+        mem_mb=config["mem_simple"] * 1024,
     conda:
         "../envs/metaphlan.yaml"
     shell:
@@ -26,23 +27,24 @@ rule install_metaphlan:
         " --nproc {threads} "
         " &> {log}"
 
+
 rule metaphlan:
     input:
         reads=get_qc_reads,
-        db=METPHLAN_DB_FOLDER / (config["metaphlan_version"]+"_installed"),
+        db=METPHLAN_DB_FOLDER / (config["metaphlan_version"] + "_installed"),
     output:
         bt="Intermediate/metaphlan/output/{sample}_bowtie2.bz2",
         profile="Intermediate/metaphlan/{analysis_type}/{sample}.txt",
-        viral = "Intermediate/metaphlan_virus/{analysis_type}/{sample}.txt",
+        viral="Intermediate/metaphlan_virus/{analysis_type}/{sample}.txt",
     log:
         "logs/metaphlan/main/{sample}.log",
     params:
-        input= lambda wildcards, input: ','.join(input.reads),
+        input=lambda wildcards, input: ",".join(input.reads),
         version=config["metaphlan_version"],
         db_folder=METPHLAN_DB_FOLDER,
     shadow:
         "minimal"
-    threads: config["threads_default"],
+    threads: config["threads_default"]
     resources:
         mem_mb=config["mem_default"] * 1024,
     conda:
@@ -64,9 +66,6 @@ rule metaphlan:
         " -o {output.profile} &> {log}"
 
 
-
-
-
 #   -t ANALYSIS TYPE      Type of analysis to perform:
 #                          * rel_ab: profiling a metagenomes in terms of relative abundances
 #                          * rel_ab_w_read_stats: profiling a metagenomes in terms of relative abundances and estimate the number of reads coming from each clade.
@@ -79,17 +78,16 @@ rule metaphlan:
 
 # sgb_to_gtdb_profile.py is a python script that is available with metaphlan4
 
+
 # my script of merging profiles needs the rel_ab_w_read_stats type
 rule merge_profiles:
     input:
-        expand("Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES),
+        expand(
+            "Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES
+        ),
     output:
-        abundance= "Profile/metaphlan_relab.tsv",
-        taxonomy= "Profile/metaphlan_taxonomy.tsv",
-        profiling_stats = "Profile/metaphlan_stats.tsv",
+        abundance="Profile/metaphlan_relab.tsv",
+        taxonomy="Profile/metaphlan_taxonomy.tsv",
+        profiling_stats="Profile/metaphlan_stats.tsv",
     script:
         "../scripts/merge_metaphlan_tables.py"
-
-
-
-
