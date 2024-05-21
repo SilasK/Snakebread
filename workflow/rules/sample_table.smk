@@ -30,17 +30,19 @@ else:
 def get_qc_reads(wildcards):
     headers = ["Reads_QC_" + f for f in FRACTIONS]
 
-    files = SampleTable.loc[wildcards.sample, headers]
-
-    if files.isnull().all():
-        logger.warning("QC-Fastq paths not in sample table, use default ones")
+    try:
+        return SampleTable.loc[wildcards.sample, headers]
+    except KeyError:
+        import warnings
+        warnings.simplefilter('once', UserWarning)
+        warnings.warn("QC-Fastq paths not in sample table, use default ones",UserWarning)
         return expand("QC/reads/{{sample}}_{fraction}.fastq.gz", fraction=FRACTIONS)
-    else:
-        return files
+
+
 
 
 def get_raw_reads(wildcards):
     headers = ["Reads_raw_" + f for f in FRACTIONS]
     fastq_dir = Path(config["fastq_dir"])
 
-    return [fastq_dir / f for f in pep.sample_table.loc[wildcards.sample, headers]]
+    return [fastq_dir / f for f in SampleTable.loc[wildcards.sample, headers]]

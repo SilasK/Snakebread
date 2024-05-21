@@ -34,14 +34,15 @@ rule metaphlan:
         db=METPHLAN_DB_FOLDER / (config["metaphlan_version"] + "_installed"),
     output:
         bt="Intermediate/metaphlan/output/{sample}_bowtie2.bz2",
-        profile="Intermediate/metaphlan/{analysis_type}/{sample}.txt",
-        viral="Intermediate/metaphlan_virus/{analysis_type}/{sample}.txt",
+        profile="Intermediate/metaphlan/{sample}.txt",
+        viral="Intermediate/metaphlan_virus/{sample}.txt",
     log:
-        "logs/metaphlan/main/{sample}.log",
+        "logs/metaphlan/{sample}.log",
     params:
         input=lambda wildcards, input: ",".join(input.reads),
         version=config["metaphlan_version"],
         db_folder=METPHLAN_DB_FOLDER,
+        analysis_type = "rel_ab_w_read_stats"
     shadow:
         "minimal"
     threads: config["threads_default"]
@@ -51,7 +52,7 @@ rule metaphlan:
         "../envs/metaphlan.yaml"
     shell:
         "metaphlan "
-        " -t {wildcards.analysis_type} "
+        " -t {params.analysis_type} "
         " --unclassified_estimation "
         " --profile_vsc "
         " --vsc_out {output.viral} "
@@ -83,7 +84,7 @@ rule metaphlan:
 rule merge_profiles:
     input:
         expand(
-            "Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES
+            "Intermediate/metaphlan/{sample}.txt", sample=SAMPLES
         ),
     output:
         abundance="Profile/metaphlan_relab.tsv",
