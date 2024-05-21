@@ -7,7 +7,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 snakefile="$SCRIPT_DIR/workflow/Snakefile"
 
-CONFIG_FILE="./config.yaml"
+CONFIG_FILE="./project_config.yaml"
 
 if [ ! -f "$CONFIG_FILE" ]; then
   # File does not exist, copy the source file to the destination
@@ -21,7 +21,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 
-snakemake -s $snakefile --configfile config.yaml \
+snakemake -s $snakefile --configfile $CONFIG_FILE \
 --rerun-triggers mtime \
 --profile slurm \
 --jobs 16 \

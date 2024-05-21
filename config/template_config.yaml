@@ -1,5 +1,17 @@
 # This file contains only the user most relavant config obtions idelly with comments
 
 
-database_dir: "databases"  # change this path to an absolute path used by all projects
+
 fastq_dir: "" # base path to raw fastq folder
+
+
+trim_mean_quality: 15
+trim_base_phred: 8
+trim_min_length: 75
+quality_trim_extra: ""
+
+
+
+
+
+metaphlan_version: "mpa_vJun23_CHOCOPhlAnSGB_202307"
