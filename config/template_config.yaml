@@ -1,0 +1,5 @@
+# This file contains only the user most relavant config obtions idelly with comments
+
+
+database_dir: "databases"  # change this path to an absolute path used by all projects
+fastq_dir: "" # base path to raw fastq folder

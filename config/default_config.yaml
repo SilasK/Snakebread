@@ -1,0 +1,29 @@
+# Use this file to define all default values
+
+threads_simple: 2
+threads_default: 8
+
+mem_simple: 2
+mem_default: 50
+mem_large: 60
+
+time_long: 12
+time_short: 2
+time_default: 5
+
+
+
+trim_mean_quality: 15
+trim_base_phred: 8
+trim_min_length: 75
+quality_trim_extra: ""
+
+
+
+
+
+metaphlan_version: "mpa_vJun23_CHOCOPhlAnSGB_202307"
+
+database_dir: "databases"  # change this path to ana abolute for all projects
+fastq_dir: "" # base path to raw fastq folder
+

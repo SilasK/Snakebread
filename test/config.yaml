@@ -1,0 +1,5 @@
+# This file contains only the user most relavant config obtions idelly with comments
+
+database_dir: "/home/users/k/kiesers/scratch/Databases"
+
+fastq_dir: "test_reads"
