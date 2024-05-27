@@ -35,11 +35,9 @@ rule qc:
 
 rule functions:
     input:
-        "Intermediate/humann/metaphlan_max_profile.tsv",
-        "Intermediate/humann/db/test/test_humann_temp",
-        # expand("Output/humann3_{type}_cpm.tsv", 
-        # type=["genefamilies", "pathabundance"]
-        # ),
-        # expand("Output/humann3_{type}.tsv", 
-        # type=["genefamilies", "pathabundance", "pathcoverage"]
-        # ),
+        expand("Functions/humann_{file}_cpm.tsv", 
+        file=["genefamilies", "pathabundance"]
+        ),
+        expand("Functions/humann_{file}.tsv", 
+        file=["genefamilies", "pathabundance", "pathcoverage"]
+        ),

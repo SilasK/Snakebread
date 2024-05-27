@@ -1,6 +1,3 @@
-raise Exception(
-    "HUMAnN currently is only compatible with the MetaPhlAn vJan21 database and not yet the latest vOct22 database"
-)
 
 HUMANN_DB_DIR = DB_DIR / "Humann"
 
@@ -37,75 +34,11 @@ rule download_uniref:
 #        " --download utility_mapping full {config[database_dir]} "
 
 
-rule join_metaphlan_profiles_for_human:
-    input:
-        expand(
-            "Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES
-        ),
-    output:
-        max_profile="Intermediate/humann/metaphlan_max_profile.tsv",
-    script:
-        "../scripts/merge_metaphlan_tables_for_humann.py"
-
-
-# humann --input $SAMPLE_1.fastq --output $OUTPUT_DIR --taxonomic-profile max_taxonomic_profile.tsv
-# The folder $OUTPUT_DIR/$SAMPLE_1_humann_temp/
-
-
-localrules:
-    create_temp_fastq,
-    join_metaphlan_profiles_for_human,
-
-
-rule create_temp_fastq:
-    output:
-        temp("Intermediate/humann/test.fastq"),
-    run:
-        import random
-
-        with open(output[0], "w") as f:
-            f.write(
-                f"@M00001:1:0:0:1\n{''.join(random.choices('ATCG', k=100))}\n+\n{'!' * 100}"
-            )
-
-
-rule create_custom_chocophlan_db:
-    input:
-        fastq=rules.create_temp_fastq.output[0],
-        nucleotide_db=ancient(HUMANN_DB_DIR / "nucleotide"),
-        protein_db=ancient(HUMANN_DB_DIR / "protein"),
-        max_profile=rules.join_metaphlan_profiles_for_human.output.max_profile,
-    output:
-        custom_db="Intermediate/humann/db/test/test_humann_temp",
-    conda:
-        "../envs/biobakery.yaml"
-    log:
-        "logs/humann/create_custom_db.log",
-    params:
-        output_dir=lambda wildcards, output: Path(output[0]).parent,
-        humann_params=config["humann_params"],
-    shadow:
-        "minimal"
-    threads: config["threads_simple"]
-    resources:
-        mem_mb=config["mem_default"] * 1024,
-    shell:
-        "humann "
-        " --output-basename test "
-        " -i {input.fastq} "
-        " -o {params.output_dir} "
-        " --threads {threads} "
-        " --taxonomic-profile {input.max_profile} "
-        " {params.humann_params} "
-        " --nucleotide-database {input.nucleotide_db}/chocophlan "
-        " --protein-database {input.protein_db}/uniref "
-        " &> {log} "
-
 
 rule humann:
     input:
         reads=get_qc_reads,
-        nucleotide_db=rules.create_custom_chocophlan_db.output.custom_db,
+        nucleotide_db=ancient(HUMANN_DB_DIR / "nucleotide"),
         protein_db=ancient(HUMANN_DB_DIR / "protein"),
     output:
         multiext(
@@ -126,15 +59,15 @@ rule humann:
     resources:
         mem_mb=config["mem_default"] * 1024,
     shell:
-        "cat -v {input} > {resources.temp_dir}/humann_{wildcards.sample}.fastq.gz 2> {log}"
+        "cat -v {input} > {resources.tmpdir}/humann_{wildcards.sample}.fastq.gz 2> {log}"
         " ; "
         "humann "
-        "-i {resources.temp_dir}/humann_{wildcards.sample}.fastq.gz "
+        "-i {resources.tmpdir}/humann_{wildcards.sample}.fastq.gz "
         " -o {params.output_dir} "
         " --output-basename {wildcards.sample} "
         " --threads {threads} "
         " {params.humann_params} "
-        " --bypass-nucleotide-index --nucleotide-database {input.nucleotide_db} "
+        " --nucleotide-database {input.nucleotide_db}/chocophlan "
         " --protein-database {input.protein_db}/uniref "
         " &>> {log} "
 
@@ -163,7 +96,7 @@ rule merge_tsv:
             "Intermediate/humann/output/{sample}_{{type_and_norm}}.tsv", sample=SAMPLES
         ),
     output:
-        "Output/humann_{type_and_norm}.tsv",
+        "Functions/humann_{type_and_norm}.tsv",
     conda:
         "../envs/biobakery.yaml"
     log:
