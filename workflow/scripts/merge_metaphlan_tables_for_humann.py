@@ -67,7 +67,7 @@ def extract_data(file_path):
             else:
                 rows.append(line.strip().split())
 
-    data= pd.DataFrame(data=rows, columns=header).set_index("clade_name")
+    data= pd.DataFrame(data=rows, columns=header).set_index(["clade_name","clade_taxid"])
     return stats, data
 
 from pathlib import Path
@@ -88,16 +88,18 @@ assert stats.db_version.nunique()==1, "You have different metaphaln versions"
 
 
 # transposed cladenames is index
-abundance= pd.concat(combined_data,axis=1).fillna(0)
+abundance= pd.concat(combined_data,axis=1).fillna(0).astype(float)
 
 # max profile
+
 max_abundance= abundance.max(axis=1).sort_index()
 
 
 with open(snakemake.output[0],"w") as fout:
     fout.write(f"#{stats.db_version.iloc[0]}\n")
+    fout.write("#clade_name\tclade_taxid\trelative_abundance\n")
 
-abundance.to_csv(snakemake.output[0],append=True)
+max_abundance.to_csv(snakemake.output[0],mode='a',sep='\t',header=False)
 
 
 
