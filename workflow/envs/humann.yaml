@@ -4,7 +4,5 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - kneaddata =0.10
-  - metaphlan =4
-  - humann =3.5
-  - biom-format
+  - humann =3.8
+

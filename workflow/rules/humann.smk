@@ -11,7 +11,7 @@ rule download_chocophlan:
     output:
         directory(HUMANN_DB_DIR / "nucleotide"),
     conda:
-        "../envs/biobakery.yaml"
+        "../envs/humann.yaml"
     log:
         "logs/download/download_chocophlan.log",
     shell:
@@ -23,7 +23,7 @@ rule download_uniref:
     output:
         directory(HUMANN_DB_DIR / "protein"),
     conda:
-        "../envs/biobakery.yaml"
+        "../envs/humann.yaml"
     log:
         "logs/download/download_uniref.log",
     shell:
@@ -48,7 +48,7 @@ rule humann:
             "pathabundance.tsv",
         ),
     conda:
-        "../envs/biobakery.yaml"
+        "../envs/humann.yaml"
     log:
         "logs/humann/{sample}.log",
         "Intermediate/humann/output/{sample}.log",
@@ -78,7 +78,7 @@ rule humann_renorm_table:
     output:
         "Intermediate/humann/output/{sample}_{type}_cpm.tsv",
     conda:
-        "../envs/biobakery.yaml"
+        "../envs/humann.yaml"
     log:
         "logs/post_process/renorm/{type}/{sample}.log",
     params:
@@ -98,7 +98,7 @@ rule merge_tsv:
     output:
         "Functions/humann_{type_and_norm}.tsv",
     conda:
-        "../envs/biobakery.yaml"
+        "../envs/humann.yaml"
     log:
         "logs/post_process/merge_tsv/{type_and_norm}.log",
     params:
