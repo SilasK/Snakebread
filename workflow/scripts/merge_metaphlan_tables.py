@@ -2,7 +2,7 @@ import os, sys
 import logging, traceback
 
 logging.basicConfig(
-    #filename=snakemake.log[0],
+    # filename=snakemake.log[0],
     level=logging.INFO,
     format="%(asctime)s %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
@@ -34,6 +34,7 @@ from collections import defaultdict
 
 from utils.taxonomy import tax2table
 
+
 def extract_data(file_path):
     """
     Extracts data from a single file.
@@ -50,31 +51,33 @@ def extract_data(file_path):
     stats = {}
     rows = []
     header = None
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         for line in f:
-            if line.startswith('#'):
-                line= line[1:].strip()
-                if  line.startswith('mpa'):
-                    stats['db_version'] = line
+            if line.startswith("#"):
+                line = line[1:].strip()
+                if line.startswith("mpa"):
+                    stats["db_version"] = line
                 elif line.startswith("estimated_reads_mapped_to_known_clades"):
-                    stats['mapped_reads'] = int( line.split(':')[1] )
-                elif 'reads processed' in line:
-                    stats['processed_reads'] = int( line.split()[0] )
-                elif line.startswith('SampleID'):
-                    stats['SampleID'] = line.split()[1]
+                    stats["mapped_reads"] = int(line.split(":")[1])
+                elif "reads processed" in line:
+                    stats["processed_reads"] = int(line.split()[0])
+                elif line.startswith("SampleID"):
+                    stats["SampleID"] = line.split()[1]
                 elif line.startswith("clade_name"):
-                    header= line.split()
-            
-            elif 't__' in line: # main file
+                    header = line.split()
+
+            elif "t__" in line:  # main file
                 rows.append(line.strip().split())
 
-    data= pd.DataFrame(data=rows, columns=header).set_index("clade_name")
+    data = pd.DataFrame(data=rows, columns=header).set_index("clade_name")
     return stats, data
 
+
 from pathlib import Path
-input_files= input_files = snakemake.input
-combined_data= {}
-combined_stats= []
+
+input_files = input_files = snakemake.input
+combined_data = {}
+combined_stats = []
 
 for file_path in input_files:
     stats, data = extract_data(file_path)
@@ -82,35 +85,23 @@ for file_path in input_files:
     combined_stats.append(pd.Series(stats))
 
 
-stats= pd.concat(combined_stats,axis=1).T.set_index("SampleID")
+stats = pd.concat(combined_stats, axis=1).T.set_index("SampleID")
 
 
-assert stats.db_version.nunique()==1, "You have different metaphaln versions"
+assert stats.db_version.nunique() == 1, "You have different metaphaln versions"
 
-stats.drop("db_version",inplace=True,axis=1)
+stats.drop("db_version", inplace=True, axis=1)
 
 stats.to_csv(snakemake.output.profiling_stats)
 
 
 # transposed cladenames is index
-abundance= pd.concat(combined_data,axis=1).fillna(0)
+abundance = pd.concat(combined_data, axis=1).fillna(0)
 
-taxa= tax2table(pd.Series(abundance.index), split_character='|', remove_prefix=True).set_index("SGB")
-abundance.index= taxa.index
+taxa = tax2table(
+    pd.Series(abundance.index), split_character="|", remove_prefix=True
+).set_index("SGB")
+abundance.index = taxa.index
 
 abundance.T.to_csv(snakemake.output.abundance)
 taxa.to_csv(snakemake.output.taxonomy)
-
-
-
-
-
-
-
-
-
-
-
-
-
-

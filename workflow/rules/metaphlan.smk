@@ -77,8 +77,8 @@ rule metaphlan:
 #                          * clade_specific_strain_tracker: list of markers present for a specific clade, specified with --clade, and all its subclades
 
 
-
 ruleorder: rerun_metaphlan > metaphlan
+
 
 rule rerun_metaphlan:
     input:
@@ -114,12 +114,6 @@ rule rerun_metaphlan:
         " -o {output.profile} &> {log}"
 
 
-
-
-
-
-
-
 # sgb_to_gtdb_profile.py is a python script that is available with metaphlan4
 
 
@@ -137,11 +131,11 @@ rule merge_profiles:
         "../scripts/merge_metaphlan_tables.py"
 
 
-
 rule merge_viral_profiles:
     input:
         expand(
-            "Intermediate/metaphlan_viral/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES
+            "Intermediate/metaphlan_viral/rel_ab_w_read_stats/{sample}.txt",
+            sample=SAMPLES,
         ),
     output:
         abundance="Profile/viral_abundance.tsv",

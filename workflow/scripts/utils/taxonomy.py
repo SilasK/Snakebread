@@ -2,7 +2,16 @@ import pandas as pd
 import numpy as np
 import warnings
 
-TAXONMIC_LEVELS = ["Domain", "phylum", "class", "order", "family", "genus", "species","SGB"]
+TAXONMIC_LEVELS = [
+    "Domain",
+    "phylum",
+    "class",
+    "order",
+    "family",
+    "genus",
+    "species",
+    "SGB",
+]
 
 
 def tax2table(Taxonomy_Series, split_character=";", remove_prefix=False):
@@ -35,12 +44,19 @@ def tax2table(Taxonomy_Series, split_character=";", remove_prefix=False):
 
     return Tax
 
-def load_green_gene_tax(taxonomy_file,sep='\t',header=None,split_character=';',remove_prefix=False):
-    """Load taxonomy from two coulmn file with greengenes format """
 
-    taxa= pd.read_table(taxonomy_file, index_col=0, header=header,sep=sep)
-    assert taxa.shape[1]==1, f"Expect only two columns in file {taxonomy_file} got:\n{taxa.head()}"
+def load_green_gene_tax(
+    taxonomy_file, sep="\t", header=None, split_character=";", remove_prefix=False
+):
+    """Load taxonomy from two coulmn file with greengenes format"""
 
-    taxa= tax2table(taxa.squeeze(), split_character=split_character,remove_prefix=remove_prefix)
+    taxa = pd.read_table(taxonomy_file, index_col=0, header=header, sep=sep)
+    assert (
+        taxa.shape[1] == 1
+    ), f"Expect only two columns in file {taxonomy_file} got:\n{taxa.head()}"
+
+    taxa = tax2table(
+        taxa.squeeze(), split_character=split_character, remove_prefix=remove_prefix
+    )
 
     return taxa

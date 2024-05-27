@@ -1,4 +1,3 @@
-
 import os, sys
 import logging, traceback
 
@@ -31,10 +30,9 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 sys.excepthook = handle_exception
 
 
-
-
 import pandas as pd
 from pathlib import Path
+
 
 def process_file(filename):
     """
@@ -46,39 +44,35 @@ def process_file(filename):
     Returns:
         dict: A dictionary containing the number of classified, unclassified, and input sequences, or None if an error occurs.
     """
-    
+
     with open(filename, "r") as f:
         text = f.read()
 
-
-
     numbers = {"sample": Path(filename).stem}
 
-    for key in ["processed","classified", "unclassified"]:
+    for key in ["processed", "classified", "unclassified"]:
+        line_with_keywords = find_line_with_keywords(text, "sequences", key)
 
-        line_with_keywords = find_line_with_keywords(text, "sequences",key)
-
-        if line_with_keywords is None:  raise Exception(f"keywords {key} and sequences not found in file {filename}:\n{text}")
+        if line_with_keywords is None:
+            raise Exception(
+                f"keywords {key} and sequences not found in file {filename}:\n{text}"
+            )
 
         # extract number at beginning of line.
         try:
             n_sequences = int(line_with_keywords.rstrip().split(maxsplit=1)[0])
         except (ValueError, IndexError) as e:
-            raise Exception(f"Error finding number at the beginning of line:\n {line_with_keywords}")
-        
+            raise Exception(
+                f"Error finding number at the beginning of line:\n {line_with_keywords}"
+            )
 
+        numbers[key] = n_sequences
 
-        numbers[key]= n_sequences
-        
-           
-
-
-    assert numbers["classified"] + numbers["unclassified"] == numbers["processed"], "Numbers do not match"
+    assert (
+        numbers["classified"] + numbers["unclassified"] == numbers["processed"]
+    ), "Numbers do not match"
 
     return numbers
-    
-
-    
 
 
 def find_line_with_keywords(text, keyword1, keyword2=None):
@@ -99,7 +93,6 @@ def find_line_with_keywords(text, keyword1, keyword2=None):
     return None
 
 
-
 results = []
 for filename in snakemake.input:
     result = process_file(filename)
@@ -107,13 +100,13 @@ for filename in snakemake.input:
         results.append(result)
 
 
-df = pd.DataFrame(results).rename(columns= {
-    "processed":"input_reads",
-    "classified":"mapped_reads",
-    "unclassified":"output_reads"
+df = pd.DataFrame(results).rename(
+    columns={
+        "processed": "input_reads",
+        "classified": "mapped_reads",
+        "unclassified": "output_reads",
     }
 )
 
 
 df.to_csv(snakemake.output[0], index=False)
-

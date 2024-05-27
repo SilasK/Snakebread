@@ -20,7 +20,10 @@ assert SampleTable.index.str.match(
 
 if not SampleTable.columns.str.startswith("Reads_QC").any():
     import warnings
-    warnings.warn("QC-Fastq paths not in sample table, use default 'QC/reads/{sample}_{fraction}.fastq.gz'")
+
+    warnings.warn(
+        "QC-Fastq paths not in sample table, use default 'QC/reads/{sample}_{fraction}.fastq.gz'"
+    )
 
 
 SAMPLES = SampleTable.index.tolist()
@@ -39,8 +42,6 @@ def get_qc_reads(wildcards):
         return SampleTable.loc[wildcards.sample, headers]
     except KeyError:
         return expand("QC/reads/{{sample}}_{fraction}.fastq.gz", fraction=FRACTIONS)
-
-
 
 
 def get_raw_reads(wildcards):
