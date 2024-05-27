@@ -21,7 +21,7 @@ include: "rules/humann.smk"
 rule profile:
     input:
         "Profile/metaphlan_relab.tsv",
-        "Profile/viral_abundance.tsv",
+        #"Profile/viral_abundance.tsv",
 
 
 rule qc:
