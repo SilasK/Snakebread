@@ -1,28 +1,33 @@
 
 
+
+ raise Exception("HUMAnN currently is only compatible with the MetaPhlAn vJan21 database and not yet the latest vOct22 database")
+
+HUMANN_DB_DIR = DB_DIR/"Humann"
+
 localrules: download_chocophlan,download_uniref
 rule download_chocophlan:
     output:
-        directory( Path(config["database_dir"]) / "chocophlan" ),
+        directory( HUMANN_DB_DIR / "nucleotide" ),
     conda:
         "../envs/biobakery.yaml"
     log:
         "logs/download/download_chocophlan.log"
     shell:
         "humann_databases --update-config yes "
-        " --download chocophlan full {config[database_dir]} &> {log}"
+        " --download chocophlan full {output} &> {log}"
 
 
 rule download_uniref:
     output:
-        directory( Path(config["database_dir"]) / "uniref" ),
+        directory( HUMANN_DB_DIR/ "protein" ),
     conda:
         "../envs/biobakery.yaml"
     log:
         "logs/download/download_uniref.log"
     shell:
         "humann_databases --update-config yes "
-        " --download uniref uniref90_diamond {config[database_dir]} &> {log}"
+        " --download uniref uniref90_diamond {output} &> {log}"
 
 #        " --download utility_mapping full {config[database_dir]} "
 
@@ -34,7 +39,7 @@ rule join_metaphlan_profiles_for_human:
     input:
         expand("Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES),
     output:
-        max_profile= "Profile/metaphlan_max_profile.tsv",
+        max_profile= "Intermediate/humann/metaphlan_max_profile.tsv",
     script:
         "../scripts/merge_metaphlan_tables_for_humann.py"
 
@@ -43,10 +48,10 @@ rule join_metaphlan_profiles_for_human:
 # The folder $OUTPUT_DIR/$SAMPLE_1_humann_temp/ 
 
 
-localrules:create_temp_fastq, join_metaphlan_profiles_for_human
+localrules: create_temp_fastq, join_metaphlan_profiles_for_human
 rule create_temp_fastq:
     output:
-        temp("Intermediate/Humann/test.fastq")
+        temp("Intermediate/humann/test.fastq")
     run:
         import random
         with open(output[0],"w") as f:
@@ -54,14 +59,15 @@ rule create_temp_fastq:
 
 
 
+
 rule create_custom_chocophlan_db:
     input:
         fastq= rules.create_temp_fastq.output[0],
-        nucleotide_db=ancient(Path(config["database_dir"]) / "chocophlan"),
-        protein_db= ancient(Path(config["database_dir"]) / "uniref"),
+        nucleotide_db=ancient(HUMANN_DB_DIR / "nucleotide"),
+        protein_db= ancient(HUMANN_DB_DIR/ "protein"),
         max_profile = rules.join_metaphlan_profiles_for_human.output.max_profile
     output:
-        custom_db= "Intermediate/Humann/db/test/test_humann_temp"
+        custom_db= "Intermediate/humann/db/test/test_humann_temp"
     conda:
         "../envs/biobakery.yaml"
     log:
@@ -71,9 +77,9 @@ rule create_custom_chocophlan_db:
         humann_params=config["humann_params"],
     shadow:
         "minimal"
-    threads: 6
+    threads: config["threads_simple"]
     resources:
-        mem_mb=64000,
+        mem_mb= config["mem_default"] * 1024,
     shell:
         "humann "
         " --output-basename test "
@@ -82,8 +88,8 @@ rule create_custom_chocophlan_db:
         " --threads {threads} "
         " --taxonomic-profile {input.max_profile} "
         " {params.humann_params} "
-        " --nucleotide-database {input.nucleotide_db} "
-        " --protein-database {input.protein_db} "
+        " --nucleotide-database {input.nucleotide_db}/chocophlan "
+        " --protein-database {input.protein_db}/uniref "
         " &> {log} "
 
 
@@ -93,21 +99,21 @@ rule humann:
     input:
         reads= get_qc_reads,
         nucleotide_db= rules.create_custom_chocophlan_db.output.custom_db,
-        protein_db= ancient(Path(config["database_dir"]) / "uniref"),
+        protein_db= ancient(HUMANN_DB_DIR / "protein"),
     output:
-        multiext("Intermediate/Humann/output/{sample}_","genefamilies.tsv","pathcoverage.tsv","pathabundance.tsv")
+        multiext("Intermediate/humann/output/{sample}_","genefamilies.tsv","pathcoverage.tsv","pathabundance.tsv")
     conda:
         "../envs/biobakery.yaml"
     log:
-        "logs/humann/{sample}.log", "Intermediate/Humann/output/{sample}.log"
+        "logs/humann/{sample}.log", "Intermediate/humann/output/{sample}.log"
     params:
         output_dir=lambda wc, output: Path(output[0]).parent,
         humann_params=config["humann_params"],
-    threads: 16
+    threads: config["threads_default"]
     resources:
-        mem_mb=64000,
+        mem_mb= config["mem_default"] * 1024,
     shell:
-        "cat {input} > {resources.temp_dir}/humann_{wildcards.sample}.fastq.gz "
+        "cat -v {input} > {resources.temp_dir}/humann_{wildcards.sample}.fastq.gz 2> {log}"
         " ; "
         "humann "
         "-i {resources.temp_dir}/humann_{wildcards.sample}.fastq.gz "
@@ -116,8 +122,8 @@ rule humann:
         " --threads {threads} "
         " {params.humann_params} "
         " --bypass-nucleotide-index --nucleotide-database {input.nucleotide_db} "
-        " --protein-database {input.protein_db} "
-        " &> {log} "
+        " --protein-database {input.protein_db}/uniref "
+        " &>> {log} "
 
 
 
@@ -125,9 +131,9 @@ rule humann:
 
 rule humann_renorm_table:
     input:
-        "Intermediate/Humann/output/{sample}_{type}.tsv"
+        "Intermediate/humann/output/{sample}_{type}.tsv"
     output:
-        "Intermediate/Humann/output/{sample}_{type}_cpm.tsv"
+        "Intermediate/humann/output/{sample}_{type}_cpm.tsv"
     conda:
         "../envs/biobakery.yaml"
     log:
@@ -136,7 +142,7 @@ rule humann_renorm_table:
         unit ="cpm"
     threads: 1
     resources:
-        mem_mb=1000,
+        mem_mb= config["mem_simple"] * 1024,
     shell:
         "humann_renorm_table --input {input} --output {output} --units {params.unit} &>  {log} "
 
@@ -145,7 +151,7 @@ rule humann_renorm_table:
 
 rule merge_tsv:
     input:
-        expand("Intermediate/Humann/output/{sample}_{{type_and_norm}}.tsv", sample=SAMPLES)
+        expand("Intermediate/humann/output/{sample}_{{type_and_norm}}.tsv", sample=SAMPLES)
     output:
         "Output/humann_{type_and_norm}.tsv"
     conda:
@@ -157,7 +163,7 @@ rule merge_tsv:
     threads:
         1
     resources:
-        mem_mb=1000,
+        mem_mb= config["mem_default"] * 1024,
     shell:
         " humann_join_tables -i {params.Search_dir} -o {output} --file_name {wildcards.type_and_norm} "
 

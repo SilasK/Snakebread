@@ -25,7 +25,6 @@ snakemake -s $snakefile --configfile $CONFIG_FILE \
 --rerun-triggers mtime \
 --profile slurm \
 --jobs 16 \
-profile qc \
 --use-conda \
 $@
 

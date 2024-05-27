@@ -18,11 +18,12 @@ include: "rules/sample_table.smk"
 include: "rules/trimming.smk"
 include: "rules/decontamination.smk"
 include: "rules/metaphlan.smk"
-
+include: "rules/humann.smk"
 
 rule profile:
     input:
         "Profile/metaphlan_relab.tsv",
+        "Profile/viral_abundance.tsv"
 
 
 rule qc:
@@ -32,3 +33,15 @@ rule qc:
             "QC/reads/{sample}_{fraction}.fastq.gz", fraction=FRACTIONS, sample=SAMPLES
         ),
         "Reports/decontamination_stats.csv",
+
+
+rule functions:
+    input:
+        "Intermediate/humann/metaphlan_max_profile.tsv",
+        "Intermediate/humann/db/test/test_humann_temp",
+        # expand("Output/humann3_{type}_cpm.tsv", 
+        # type=["genefamilies", "pathabundance"]
+        # ),
+        # expand("Output/humann3_{type}.tsv", 
+        # type=["genefamilies", "pathabundance", "pathcoverage"]
+        # ),

@@ -31,3 +31,4 @@ database_dir: "/srv/beegfs/scratch/users/p/parkr/Databases"
   # change this path to ana abolute for all projects
 fastq_dir: "" # base path to raw fastq folder
 
+humann_params: ""
