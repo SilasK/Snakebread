@@ -1,6 +1,6 @@
 # This file contains only the user most relavant config obtions idelly with comments
 
-
+# database_dir: # should be defined if not defined in default_config.yaml
 
 fastq_dir: "" # base path to raw fastq folder
 
@@ -8,10 +8,12 @@ fastq_dir: "" # base path to raw fastq folder
 trim_mean_quality: 15
 trim_base_phred: 8
 trim_min_length: 75
-quality_trim_extra: ""
+quality_trim_extra: "" # extra parameters for fastp
 
 
 
 
 
 metaphlan_version: "mpa_vJun23_CHOCOPhlAnSGB_202307"
+
+humann_params: "" # extra human parameters
