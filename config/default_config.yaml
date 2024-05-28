@@ -7,9 +7,9 @@ threads_default: 8
 
 mem_simple: 2
 mem_default: 50
-mem_large: 100
+mem_large: 80 # used by humann
 
-time_long: 12
+time_long: 12 # used by humann
 time_short: 2
 time_default: 5
 
