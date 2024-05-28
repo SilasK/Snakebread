@@ -128,10 +128,10 @@ rule humann:
     resources:
         mem_mb=config["mem_default"] * 1024,
     shell:
-        "cat -v {input} > {resources.temp_dir}/humann_{wildcards.sample}.fastq.gz 2> {log}"
+        "cat -v {input} > {resources.tmpdir}/humann_{wildcards.sample}.fastq.gz 2> {log}"
         " ; "
         "humann "
-        "-i {resources.temp_dir}/humann_{wildcards.sample}.fastq.gz "
+        "-i {resources.tmpdir}/humann_{wildcards.sample}.fastq.gz "
         " -o {params.output_dir} "
         " --output-basename {wildcards.sample} "
         " --threads {threads} "
