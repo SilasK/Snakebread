@@ -98,9 +98,17 @@ abundance = pd.concat(combined_data, axis=1).fillna(0).astype(float)
 
 max_abundance = abundance.max(axis=1).sort_index()
 
+max_abundance = pd.DataFrame(max_abundance)
+
+max_abundance["max_abundance"]= ""
+
 
 with open(snakemake.output[0], "w") as fout:
     fout.write(f"#{stats.db_version.iloc[0]}\n")
-    fout.write("#clade_name\tclade_taxid\trelative_abundance\n")
+    fout.write("#max profile of all metaphlan samples\n")
+    fout.write("#10000000 reads processed\n")
+    fout.write("#SampleID	max_profile\n")
+    
+    fout.write("#clade_name\tclade_taxid\trelative_abundance\tadditional_species\n")
 
 max_abundance.to_csv(snakemake.output[0], mode="a", sep="\t", header=False)

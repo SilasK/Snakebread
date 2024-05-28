@@ -40,7 +40,8 @@ rule download_uniref:
 rule join_metaphlan_profiles_for_human:
     input:
         expand(
-            "Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES
+            rules.metaphlan.output.profile, sample=SAMPLES,
+            #"Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES
         ),
     output:
         max_profile="Intermediate/humann/metaphlan_max_profile.tsv",
@@ -75,8 +76,9 @@ rule create_custom_chocophlan_db:
         nucleotide_db=ancient(HUMANN_DB_DIR / "nucleotide"),
         protein_db=ancient(HUMANN_DB_DIR / "protein"),
         max_profile=rules.join_metaphlan_profiles_for_human.output.max_profile,
+        #max_profile= "Intermediate/metaphlan/rel_ab/sample1.txt" # HACK: As a test I use here sample 1 !!!
     output:
-        custom_db="Intermediate/humann/db/test/test_humann_temp",
+        custom_db=directory("Intermediate/humann/db/test/test_humann_temp"),
     conda:
         "../envs/humann.yaml"
     log:
@@ -163,7 +165,7 @@ rule merge_tsv:
             "Intermediate/humann/output/{sample}_{{type_and_norm}}.tsv", sample=SAMPLES
         ),
     output:
-        "Output/humann_{type_and_norm}.tsv",
+        "Functions/humann_{type_and_norm}.tsv",
     conda:
         "../envs/humann.yaml"
     log:
