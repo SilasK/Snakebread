@@ -176,7 +176,7 @@ rule merge_tsv:
     log:
         "logs/post_process/merge_tsv/{type_and_norm}.log",
     params:
-        Search_dir="Humann",
+        Search_dir="Intermediate/humann/output",
     threads: 1
     resources:
         mem_mb=config["mem_default"] * 1024,
