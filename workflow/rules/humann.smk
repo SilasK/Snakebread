@@ -119,26 +119,31 @@ rule humann:
     conda:
         "../envs/humann.yaml"
     log:
-        "logs/humann/{sample}.log",
-        "Intermediate/humann/output/{sample}.log",
+        bash="logs/humann/{sample}.log",
+        humann="Intermediate/humann/output/{sample}.log",
     params:
         output_dir=lambda wc, output: Path(output[0]).parent,
+        concatenator=lambda wc, input: "zcat" if all(Path(file).suffix == '.gz' for file in input.reads) else "cat",
         humann_params=config["humann_params"],
     threads: config["threads_default"]
     resources:
         mem_mb=config["mem_default"] * 1024,
+        runtime= config["time_long"] * 60,
+        slurm_partition="shared-bigmem" # Partition hard-coded, can be changed with snakemake command line arguments
     shell:
-        "cat -v {input} > {resources.tmpdir}/humann_{wildcards.sample}.fastq.gz 2> {log}"
-        " ; "
+        ' TMP_FILE="{resources.tmpdir}/humann_{wildcards.sample}.fastq" ;\n'
+        "{params.concatenator} {input.reads} > $TMP_FILE 2> {log.bash} ;"
+        "\n"
+        " "
         "humann "
-        "-i {resources.tmpdir}/humann_{wildcards.sample}.fastq.gz "
+        "-i $TMP_FILE "
         " -o {params.output_dir} "
         " --output-basename {wildcards.sample} "
         " --threads {threads} "
         " {params.humann_params} "
         " --bypass-nucleotide-index --nucleotide-database {input.nucleotide_db} "
         " --protein-database {input.protein_db}/uniref "
-        " &>> {log} "
+        " &>> {log.bash} "
 
 
 rule humann_renorm_table:
