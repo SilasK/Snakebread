@@ -75,7 +75,7 @@ By default the pipeline runs simply the `profile` target.
 ```
 
 
-# Integrate new code.
+# Integrate new code
 
 I hope you to spare you with complicated merge of code. 
 I will try to keep the code in a way that you can simply pull the new code from the repository and run the pipeline.
@@ -113,11 +113,14 @@ git clone https://github.com/silask/CDM_Pipeline
 
 
 
-## Setup
+# Setup
 
 (I explained this to Rahel)
 
-### Setup on personal computer
+
+
+
+## Setup on personal computer
 
 Install [VS Code](https://code.visualstudio.com/) and install the extension for the [remote development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack). Using this extension, you can connect to the HPC serversand work on the server as if you were working on your personal computer.
 
@@ -125,6 +128,21 @@ and the snakemake language extension (Search in extensions).
 
 
 ## Setup on HPC servers
+
+
+### 0. Copy the code of the pipeline
+
+Copy the code of the pipeline to the server. (I need to give you access to the repository on Github)
+
+```bash
+
+cd ~
+git clone https://github.com/silask/CDM_Pipeline
+
+
+```
+
+
 
 ### 1. Basic setup
 
@@ -221,16 +239,6 @@ And it will submit the jobs to the slurm cluster.
 
 
 
-### 6. Copy the code of the pipeline
 
-Copy the code of the pipeline to the server. (I need to give you access to the repository on Github)
-
-```bash
-
-cd ~
-git clone https://github.com/silask/CDM_Pipeline
-
-
-```
 
 
