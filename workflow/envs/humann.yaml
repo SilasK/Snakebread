@@ -4,4 +4,7 @@ channels:
   - biobakery
   - defaults
 dependencies:
-  - humann =3.9
+  - metaphlan=4.1 # humann doesn't want to be alone
+  - pip
+  - pip:
+    - humann==3.9

@@ -80,19 +80,23 @@ rule metaphlan:
 ruleorder: rerun_metaphlan > metaphlan
 
 
+wildcard_constraints:
+    analysis_type="(rel_ab|rel_ab_w_read_stats|reads_map|clade_profiles|marker_ab_table|marker_counts|marker_pres_table|clade_specific_strain_tracker)",
+
+
 rule rerun_metaphlan:
     input:
         bt="Intermediate/metaphlan/mapresults/{sample}_bowtie2.bz2",
     output:
         profile="Intermediate/metaphlan/{analysis_type}/{sample}.txt",
-        viral="Intermediate/metaphlan_viral/{analysis_type}/{sample}.txt",
+        #viral="Intermediate/metaphlan_viral/{analysis_type}/{sample}.txt",
     log:
         "logs/metaphlan/{analysis_type}/{sample}.log",
     shadow:
         "minimal"
-    threads: config["threads_simple"]
+    threads: config["threads_default"]
     resources:
-        mem_mb=config["mem_simple"] * 1024,
+        mem_mb=config["mem_default"] * 1024,
     params:
         version=config["metaphlan_version"],
         db_folder=METPHLAN_DB_FOLDER,
@@ -103,8 +107,6 @@ rule rerun_metaphlan:
         " -t {wildcards.analysis_type} "
         " --unclassified_estimation "
         " {input} "
-        " --profile_vsc "
-        " --vsc_out {output.viral} "
         " --index {params.version} "
         " --bowtie2db {params.db_folder} "
         " --sample_id {wildcards.sample} "
