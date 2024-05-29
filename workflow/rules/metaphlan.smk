@@ -79,17 +79,15 @@ rule metaphlan:
 
 ruleorder: rerun_metaphlan > metaphlan
 
-
-wildcard_constraints:
-    analysis_type="(rel_ab|rel_ab_w_read_stats|reads_map|clade_profiles|marker_ab_table|marker_counts|marker_pres_table|clade_specific_strain_tracker)",
-
-
 rule rerun_metaphlan:
     input:
         bt="Intermediate/metaphlan/mapresults/{sample}_bowtie2.bz2",
     output:
+        # viral output needs fastq input
         profile="Intermediate/metaphlan/{analysis_type}/{sample}.txt",
-        #viral="Intermediate/metaphlan_viral/{analysis_type}/{sample}.txt",
+    wildcard_constraints:
+        # constrain analysis_type to the allowed values, exclude 'rel_ab_w_read_stats' as this is already produced by the main run.
+        analysis_type="(rel_ab|reads_map|clade_profiles|marker_ab_table|marker_counts|marker_pres_table|clade_specific_strain_tracker)",
     log:
         "logs/metaphlan/{analysis_type}/{sample}.log",
     shadow:

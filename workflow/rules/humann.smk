@@ -40,8 +40,7 @@ rule download_uniref:
 rule join_metaphlan_profiles_for_human:
     input:
         expand(
-            rules.metaphlan.output.profile, sample=SAMPLES,
-            #"Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES
+            "Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES
         ),
     output:
         max_profile="Intermediate/humann/metaphlan_max_profile.tsv",
