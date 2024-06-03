@@ -140,7 +140,7 @@ rule humann:
         " --output-basename {wildcards.sample} "
         " --threads {threads} "
         " {params.humann_params} "
-        " --bypass-nucleotide-index --nucleotide-database {input.nucleotide_db} "
+        " --bypass-nucleotide-index --nucleotide-database {input.nucleotide_db}/test_bowtie2_index "
         " --protein-database {input.protein_db}/uniref "
         " &>> {log.bash} "
 
