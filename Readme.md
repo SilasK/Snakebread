@@ -168,7 +168,7 @@ Install also the snakemake language extension on the VS Code on the server.
 Install the [slurm plugin for snakemake](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html)
 
 ```bash
-pip install snakemake-executor-plugin-slurm
+mamba install snakemake-executor-plugin-slurm
 ```
 
 
