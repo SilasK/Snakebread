@@ -19,7 +19,7 @@ sample1,sample1_R1.fastq.gz,sample1_R2.fastq.gz
 sample2,sample2_R1.fastq.gz,sample2_R2.fastq.gz
 ```
 
-If you have already quality controlled reads, you can also provide the path to the quality controlled reads in the sample table under the headers `Reads_QC_R1` and `Reads_QC_R2`.
+If you have already quality controlled reads, you can provide the path to the quality controlled reads in the sample table under the headers `Reads_QC_R1` and `Reads_QC_R2`.
 
 If all the fastq files are within a directory, you don't need to provide the full path to the each fastq files. You can specify the main `fastq_dir` in the config file (see next step). In the sample table provide only the relative path to the `fastq_dir`. 
 
