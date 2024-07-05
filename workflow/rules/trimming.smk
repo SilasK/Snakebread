@@ -51,6 +51,6 @@ rule multiqc_fastp:
         "logs/multiqc/quality_trimming.log",
     threads: 1
     resources:
-        mem_mb=config["mem_simple"] * 1024,
+        mem_mb=config["mem_default"] * 1024,
     wrapper:
         "v3.3.3/bio/multiqc"
