@@ -30,29 +30,20 @@ rule download_uniref:
 
 
 
-rule join_metaphaln_profiles_for_human:
+rule join_metaphlan_profiles_for_human:
     input:
-        expand("Intermediate/metaphlan/rel_ab/{sample}.txt", sample=SAMPLES),
-    params:
-        dir= lambda wc,input: Path(input[0]).parent
+        expand("Intermediate/metaphlan/rel_ab_w_read_stats/{sample}.txt", sample=SAMPLES),
     output:
-        joined_profile= "Intermediate/metaphlan/joined_rel_ab_for_humann.txt",
-        max_profile = "Intermediate/humann/max_abundance_profile.txt",
-    log:    
-        "logs/humann/join_metaphlan_profiles.log"
-    conda:
-        "../envs/biobakery.yaml"
-    shell:
-        "humann_join_tables --input {params.dir} --output {output.joined_profile} &> {log} ;\n"
-        " humann_reduce_table --input {output.joined_profile} "
-        " --output {output.max_profile} --function max --sort-by level &>> {log}"
+        max_profile= "Profile/metaphlan_max_profile.tsv",
+    script:
+        "../scripts/merge_metaphlan_tables_for_humann.py"
 
 
 # humann --input $SAMPLE_1.fastq --output $OUTPUT_DIR --taxonomic-profile max_taxonomic_profile.tsv
 # The folder $OUTPUT_DIR/$SAMPLE_1_humann_temp/ 
 
 
-localrules:create_temp_fastq
+localrules:create_temp_fastq, join_metaphlan_profiles_for_human
 rule create_temp_fastq:
     output:
         temp("Intermediate/Humann/test.fastq")
@@ -68,7 +59,7 @@ rule create_custom_chocophlan_db:
         fastq= rules.create_temp_fastq.output[0],
         nucleotide_db=ancient(Path(config["database_dir"]) / "chocophlan"),
         protein_db= ancient(Path(config["database_dir"]) / "uniref"),
-        max_profile = rules.join_metaphaln_profiles_for_human.output.max_profile
+        max_profile = rules.join_metaphlan_profiles_for_human.output.max_profile
     output:
         custom_db= "Intermediate/Humann/db/test/test_humann_temp"
     conda:
