@@ -25,7 +25,7 @@ quality_trim_extra: ""
 
 # problem of incompatibilitiess of humann and metaphlan db see
 # https://forum.biobakery.org/t/metaphlan-v4-0-2-and-huma-3-6-metaphlan-taxonomic-profile-provided-was-not-generated-with-the-expected-database/4296/32
-metaphlan_version: "mpa_vJun23_CHOCOPhlAnSGB_202307" # "mpa_vJan21_CHOCOPhlAnSGB_202103" #
+metaphlan_version: "mpa_vJan25_CHOCOPhlAnSGB_202503" 
 
 database_dir: "/srv/beegfs/scratch/users/p/parkr/Databases"
 

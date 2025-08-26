@@ -14,6 +14,6 @@ quality_trim_extra: "" # extra parameters for fastp
 
 
 
-metaphlan_version: "mpa_vJun23_CHOCOPhlAnSGB_202307"
+metaphlan_version: "mpa_vJan25_CHOCOPhlAnSGB_202503"
 
 humann_params: "" # extra human parameters
