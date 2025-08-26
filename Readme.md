@@ -1,5 +1,3 @@
-Here's a proofread version of your document:
-
 # Metagenome Pipeline Used in Centre de la Mémoire
 
 ## Run the Pipeline
