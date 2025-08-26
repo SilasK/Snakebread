@@ -2,22 +2,29 @@ import pandas as pd
 
 
 sample_name_constraint = "[A-Za-z][A-Za-z0-9]+"
-
-
 wildcard_constraints:
     sample=sample_name_constraint,
 
 
-sample_table_file = "samples.csv"
-SampleTable = pd.read_csv(sample_table_file, index_col=0)
+# Load sample.csv or sample.tsv
+try:
+    SampleTable = pd.read_csv("samples.csv", index_col=0)
+except FileNotFoundError:
+    try:
+        SampleTable = pd.read_csv("samples.tsv", sep="\t", index_col=0)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            "Sample table not found. Please provide a 'samples.csv' or 'samples.tsv' file."
+        )
 
-
+# make some checks on sample names
 assert SampleTable.index.is_unique, "Sample table index is not unique"
 assert SampleTable.index.str.match(
     sample_name_constraint
 ).all(), "Not all sample names correspond to sample name criteria"
 
 
+# check if QC fastq files are provided
 if not SampleTable.columns.str.startswith("Reads_QC").any():
     import warnings
 
@@ -25,8 +32,8 @@ if not SampleTable.columns.str.startswith("Reads_QC").any():
         "QC-Fastq paths not in sample table, use default 'QC/reads/{sample}_{fraction}.fastq.gz'"
     )
 
-
-SAMPLES = SampleTable.index.tolist()
+# HACK: limit to 5 samplse
+SAMPLES = SampleTable.index.tolist()[:5]
 PAIRED = SampleTable.columns.str.contains("R2").any()
 
 if PAIRED:
