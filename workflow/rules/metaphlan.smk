@@ -19,7 +19,7 @@ rule install_metaphlan:
     resources:
         mem_mb=config["mem_simple"] * 1024,
     conda:
-        "../envs/metaphlan.yaml"
+        "../envs/biobakery.yaml"
     shell:
         "metaphlan --install "
         " --bowtie2db {params.db_folder} "
@@ -48,7 +48,7 @@ rule metaphlan:
     resources:
         mem_mb=config["mem_default"] * 1024,
     conda:
-        "../envs/metaphlan.yaml"
+        "../envs/biobakery.yaml"
     shell:
         "metaphlan "
         " -t rel_ab_w_read_stats "
@@ -99,7 +99,7 @@ rule rerun_metaphlan:
         version=config["metaphlan_version"],
         db_folder=METPHLAN_DB_FOLDER,
     conda:
-        "../envs/metaphlan.yaml"
+        "../envs/biobakery.yaml"
     shell:
         "metaphlan "
         " -t {wildcards.analysis_type} "
