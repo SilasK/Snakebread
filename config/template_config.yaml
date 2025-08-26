@@ -11,7 +11,7 @@ trim_min_length: 75
 quality_trim_extra: "" # extra parameters for fastp
 
 
-
+database_dir: "/rs_scratch/ifik_miclab/ifik_miclab1/Silas/Databases"
 
 
 metaphlan_version: "mpa_vJan25_CHOCOPhlAnSGB_202503"

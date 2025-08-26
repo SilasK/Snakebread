@@ -27,7 +27,7 @@ quality_trim_extra: ""
 # https://forum.biobakery.org/t/metaphlan-v4-0-2-and-huma-3-6-metaphlan-taxonomic-profile-provided-was-not-generated-with-the-expected-database/4296/32
 metaphlan_version: "mpa_vJan25_CHOCOPhlAnSGB_202503" 
 
-database_dir: "/srv/beegfs/scratch/users/p/parkr/Databases"
+database_dir: "/databases"
 
   # change this path to ana abolute for all projects
 fastq_dir: "" # base path to raw fastq folder
